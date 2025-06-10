@@ -1,0 +1,79 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  callsign  String?  @unique
+  name      String?
+  qth       String?  // QTH地址
+  locator   String?  // 网格定位
+  power     String?  // 发射功率
+  antenna   String?  // 天线信息
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 关联的QSL记录
+  qslLogs QslLog[]
+  // 关联的卡片模板
+  cardTemplates CardTemplate[]
+
+  @@map("users")
+}
+
+model QslLog {
+  id            Int      @id @default(autoincrement())
+  userId        String
+  contactCall   String   // 对方呼号
+  contactName   String?  // 对方姓名
+  frequency     String   // 频率
+  mode          String   // 模式 (SSB, CW, FM, etc.)
+  date          String   // 通联日期 (YYYY-MM-DD格式)
+  time          String   // 通联时间 (HH:MM格式)
+  rstSent       String   // 发送的RST
+  rstReceived   String   // 接收的RST
+  band          String?  // 波段
+  power         String?  // 功率
+  antenna       String?  // 天线
+  qth           String?  // 地点
+  locator       String?  // 网格定位
+  notes         String?  // 备注
+  qslSent       Boolean  @default(false) // 是否已发送QSL卡片
+  qslReceived   Boolean  @default(false) // 是否已接收QSL卡片
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // 关联用户
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("qsl_logs")
+}
+
+model CardTemplate {
+  id          Int      @id @default(autoincrement())
+  userId      String
+  name        String   // 模板名称
+  description String?  // 模板描述
+  htmlContent String   // HTML内容
+  cssContent  String?  // CSS样式 (重命名字段)
+  isDefault   Boolean  @default(false) // 是否为默认模板
+  isPublic    Boolean  @default(false) // 是否公开给其他用户使用
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // 关联用户
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("card_templates")
+} 
